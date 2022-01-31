@@ -4,10 +4,10 @@ from nbtschematic import SchematicFile
 import logging
 import argparse
 
-parser = argparse.ArgumentParser(description='Convert a Minecraft schematic to an animation.')
-parser.add_argument('inputFile', type=str, nargs=1, help='The input schematic file.')
-parser.add_argument('outputFile', type=str, nargs=1, help='The output animation file.')
-parser.add_argument('-d', '--debug', help="Enable debug mode.", action='store_true')
+parser = argparse.ArgumentParser(description='Convert a Minecraft schematic to an animation')
+parser.add_argument('inputFile', type=str, nargs=1, help='The input schematic file')
+parser.add_argument('outputFile', type=str, nargs=1, help='The output animation file')
+parser.add_argument('-d', '--debug', help="Enable debug mode", action='store_true')
 
 args = parser.parse_args()
 logLevel = logging.INFO
