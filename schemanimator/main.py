@@ -5,7 +5,9 @@ import logging
 import argparse
 import loader
 import pyglet
+import math
 import renderer
+from isometric import to_isometric, X_STEP, Y_STEP
 
 parser = argparse.ArgumentParser(
     description="Convert a Minecraft schematic to an animation"
@@ -53,25 +55,32 @@ def run():
     width = schem.global_width
     height = schem.global_height
 
-    l = loader.ImageLoader()
+    image_loader = loader.ImageLoader()
     batch = pyglet.graphics.Batch()
     sprites = []
 
-    block_width = int(OUTPUT_WIDTH / width)
+    blocks_across = int(OUTPUT_WIDTH / width)
 
     for w in range(width):
         for h in range(height):
-            p = (w, h, 0)
-            b = schem.at(p)
-            if b is None:
-                continue
-            im = l.get_image(b)
-            sp = pyglet.sprite.Sprite(im, batch=batch)
-            scale = block_width / im.width
-            sp.update(
-                x=w * block_width, y=h * block_width, scale_x=scale, scale_y=scale
-            )
-            sprites.append(sp)
+            for l in range(2):
+                p = (w, h, l)
+                b = schem.at(p)
+
+                if b is None:
+                    continue
+                im = image_loader.get_image(b)
+
+                sp = pyglet.sprite.Sprite(im, batch=batch)
+                xi, yi = to_isometric(p)
+                scale = 1.0
+                sp.update(
+                    x=xi * 30.0,
+                    y=yi * 30.0,
+                    scale_x=30 / im.width,
+                    scale_y=30 / im.width,
+                )
+                sprites.append(sp)
 
     ren.queue([batch])
     pyglet.app.run()
