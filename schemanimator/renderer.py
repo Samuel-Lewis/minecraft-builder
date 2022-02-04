@@ -34,7 +34,7 @@ class Renderer(pyglet.window.Window):
         for c in self.display_content:
             c.draw()
 
-        self.pipe()
+        # self.pipe()
         self.debug_draw()
 
     def debug_draw(self):

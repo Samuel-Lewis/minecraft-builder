@@ -40,9 +40,6 @@ class Schematic:
             self.sf.get("Length"),
         )
         logging.debug("Properties: %s", self.sf.keys())
-        # for k in sf.keys():
-        #   logging.debug("%s: %s", k, sf.get(k))
-
         self.palette = {value: key for (key, value) in self.sf.get("Palette").items()}
 
     def get_block(self, pos):
@@ -73,7 +70,7 @@ class Schematic:
                     old_attrs = self.space[p].get("attrs")
                     self.space[p]["attrs"] = {**old_attrs, **attrs}
                 else:
-                    self.space[p] = {"id": id, "attrs": attrs, "pos": pos}
+                    self.space[p] = {"id": id, "nbt": block, "attrs": attrs, "pos": pos}
 
         logging.debug("Mapping blocks")
         for x in range(self.global_width):

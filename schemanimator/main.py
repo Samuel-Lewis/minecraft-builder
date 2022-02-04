@@ -7,7 +7,7 @@ import loader
 import pyglet
 import math
 import renderer
-from isometric import to_isometric, X_STEP, Y_STEP
+from isometric import to_screen
 
 parser = argparse.ArgumentParser(
     description="Convert a Minecraft schematic to an animation"
@@ -29,6 +29,13 @@ parser.add_argument(
     default=480,
     help="output video height (default: 480)",
 )
+parser.add_argument(
+    "-m",
+    "--log-missing",
+    help="logs missing assets for a schematic, does not render the schematic output",
+    action="store_true",
+)
+
 
 args = parser.parse_args()
 OUTPUT_WIDTH = args.width
@@ -50,39 +57,45 @@ logging.debug("Output file: %s", OUT_FULL_NAME)
 
 
 def run():
-    ren = renderer.Renderer(OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME)
+    image_loader = loader.ImageLoader()
     schem = schematic.Schematic(IN_FULL_NAME)
+
+    if args.log_missing:
+        image_loader.log_missing_assets(schem)
+        return
+
+    ren = renderer.Renderer(OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME)
     width = schem.global_width
     height = schem.global_height
+    length = schem.global_length
 
-    image_loader = loader.ImageLoader()
     batch = pyglet.graphics.Batch()
     sprites = []
 
     blocks_across = int(OUTPUT_WIDTH / width)
+    block_size = blocks_across
 
     for w in range(width):
         for h in range(height):
-            for l in range(2):
+            for l in range(length):
                 p = (w, h, l)
                 b = schem.at(p)
 
                 if b is None:
                     continue
                 im = image_loader.get_image(b)
-
-                sp = pyglet.sprite.Sprite(im, batch=batch)
-                xi, yi = to_isometric(p)
-                scale = 1.0
+                sp = pyglet.sprite.Sprite(im)
+                xi, yi = to_screen(p, OUTPUT_WIDTH, OUTPUT_HEIGHT, block_size)
+                scale = block_size / im.width
                 sp.update(
-                    x=xi * 30.0,
-                    y=yi * 30.0,
-                    scale_x=30 / im.width,
-                    scale_y=30 / im.width,
+                    x=xi,
+                    y=yi,
+                    scale_x=scale,
+                    scale_y=scale,
                 )
                 sprites.append(sp)
 
-    ren.queue([batch])
+    ren.queue(sprites)
     pyglet.app.run()
 
 
