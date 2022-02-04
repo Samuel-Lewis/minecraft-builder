@@ -1,15 +1,27 @@
 import logging
 import pyglet
 import ffmpeg
+import animator
+import isometric
+import loader
 
 
 class Renderer(pyglet.window.Window):
-    def __init__(self, width, height, inputFile, outputFile):
+    def __init__(
+        self,
+        animator: animator.Animator,
+        width: int,
+        height: int,
+        inputFile: str,
+        outputFile: str,
+    ):
         super(Renderer, self).__init__(width=width, height=height)
         pyglet.clock.schedule_interval(self.update, 0.1)
         self.clear()
         self.display_content = []
+        self.animator = animator
         self.frame = 0
+        self.loader = loader.ImageLoader()
         self.inputFile = inputFile
         self.outputFile = outputFile
         self.process2 = (
@@ -26,13 +38,27 @@ class Renderer(pyglet.window.Window):
             .run_async(pipe_stdin=True)
         )
 
-    def update(self, dt):
+    def update(self, dt: int):
         self.frame += 1
+        self.display_content = self.animator.update(3)
 
     def on_draw(self):
         self.clear()
-        for c in self.display_content:
-            c.draw()
+        block_size = 60
+
+        for b in self.display_content:
+            im = self.loader.get_image(b)
+            sp = pyglet.sprite.Sprite(im)
+            p = b.get("render_pos")
+            xi, yi = isometric.to_screen(p, self.width, self.height, block_size)
+            scale = block_size / im.width
+            sp.update(
+                x=xi,
+                y=yi,
+                scale_x=scale,
+                scale_y=scale,
+            )
+            sp.draw()
 
         # self.pipe()
         self.debug_draw()
@@ -71,7 +97,7 @@ class Renderer(pyglet.window.Window):
         pixels = texture.get_data(format, pitch)
         self.process2.stdin.write(pixels)
 
-    def on_key_press(self, symbol, modifiers):
+    def on_key_press(self, symbol, _):
         logging.debug("Key pressed: %s", symbol)
         if symbol == pyglet.window.key.ESCAPE:
             self.stop()

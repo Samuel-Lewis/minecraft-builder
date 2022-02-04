@@ -1,11 +1,11 @@
 # #!/usr/bin/python3
 
+import animator
 import schematic
 import logging
 import argparse
 import loader
 import pyglet
-import math
 import renderer
 from isometric import to_screen
 
@@ -30,12 +30,13 @@ parser.add_argument(
     help="output video height (default: 480)",
 )
 parser.add_argument(
-    "-m",
-    "--log-missing",
-    help="logs missing assets for a schematic, does not render the schematic output",
-    action="store_true",
+    "-s",
+    "--slices",
+    help="specify the number of slices in the schematic (default: 1)",
+    nargs="?",
+    default=1,
+    type=int,
 )
-
 
 args = parser.parse_args()
 OUTPUT_WIDTH = args.width
@@ -57,45 +58,11 @@ logging.debug("Output file: %s", OUT_FULL_NAME)
 
 
 def run():
-    image_loader = loader.ImageLoader()
-    schem = schematic.Schematic(IN_FULL_NAME)
-
-    if args.log_missing:
-        image_loader.log_missing_assets(schem)
-        return
-
-    ren = renderer.Renderer(OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME)
-    width = schem.global_width
-    height = schem.global_height
-    length = schem.global_length
-
-    batch = pyglet.graphics.Batch()
-    sprites = []
-
-    blocks_across = int(OUTPUT_WIDTH / width)
-    block_size = blocks_across
-
-    for w in range(width):
-        for h in range(height):
-            for l in range(length):
-                p = (w, h, l)
-                b = schem.at(p)
-
-                if b is None:
-                    continue
-                im = image_loader.get_image(b)
-                sp = pyglet.sprite.Sprite(im)
-                xi, yi = to_screen(p, OUTPUT_WIDTH, OUTPUT_HEIGHT, block_size)
-                scale = block_size / im.width
-                sp.update(
-                    x=xi,
-                    y=yi,
-                    scale_x=scale,
-                    scale_y=scale,
-                )
-                sprites.append(sp)
-
-    ren.queue(sprites)
+    schem = schematic.Schematic(IN_FULL_NAME, args.slices)
+    anim = animator.Animator(schem)
+    renderer.Renderer(anim, OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME)
+    
+    # ren.queue(sprites)
     pyglet.app.run()
 
 
