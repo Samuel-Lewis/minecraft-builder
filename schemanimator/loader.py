@@ -2,9 +2,10 @@ import logging
 import pyglet
 import os
 
-
 ASSET_FOLDER = "../assets"
 MISSING_NAME = "missing"
+
+LOG = logging.getLogger(__name__)
 
 pyglet.resource.path = [ASSET_FOLDER]
 
@@ -21,7 +22,7 @@ class ImageLoader:
             return
         self.missing_assets.add(id)
 
-        logging.warning("Failed to load image %s", id)
+        LOG.warning("Failed to load image %s", id)
         if self.out_file == None:
             self.out_file = open("missing.txt", "w")
         self.out_file.write(f"{id}\n")
@@ -36,7 +37,7 @@ class ImageLoader:
         nbt = block.get("nbt")
         id = block.get("id")
         try:
-            logging.debug("Loading image %s", id)
+            LOG.debug("Loading image %s", id)
             namespace, name = self.get_namespace(id)
             image = pyglet.resource.image(f"{namespace}/{name}.png")
             self.images[id] = image

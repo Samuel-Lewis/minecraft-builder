@@ -1,5 +1,7 @@
 black==22.1.0
 click==8.0.3
+colorama==0.4.4
+easing-functions==1.0.4
 ffmpeg-python==0.2.0
 future==0.18.2
 mypy-extensions==0.4.3

@@ -1,5 +1,8 @@
 from nbtschematic import SchematicFile
+import isometric
 import logging
+
+LOG = logging.getLogger(__name__)
 
 IGNORE_LIST = [
     "minecraft:air",
@@ -32,23 +35,24 @@ class Schematic:
         self.load_file()
         self.slices = []
         self.map_space()
+        self.pos_meta = isometric.find_extremeties(self.slices)
 
     def load_file(self):
         self.sf = SchematicFile.load(self.in_file).get("Schematic")
-        logging.info("Loaded schematic file %s", self.in_file)
-        logging.info(
+        LOG.info("Loaded schematic file %s", self.in_file)
+        LOG.info(
             "Dimensions %dw x %dh x %dl",
             self.sf.get("Width"),
             self.sf.get("Height"),
             self.sf.get("Length"),
         )
-        logging.debug("Properties: %s", self.sf.keys())
+        LOG.debug("Properties: %s", self.sf.keys())
         self.palette = {value: key for (key, value) in self.sf.get("Palette").items()}
 
     def get_block_global(self, pos: tuple[int, int, int]):
         c = self.global_cord_to_index(pos)
         if c > self.sf.get("Length") * self.sf.get("Width") * self.sf.get("Height"):
-            logging.error("Position [%s] out of bounds (index %d)", pos, c)
+            LOG.error("Position [%s] out of bounds (index %d)", pos, c)
             return None
         return self.palette.get(self.sf.get("BlockData")[c])
 
@@ -71,7 +75,7 @@ class Schematic:
         return id not in IGNORE_LIST
 
     def map_space(self):
-        logging.debug("Mapping schematic space")
+        LOG.debug("Mapping schematic space")
         self.slices = [{} for _ in range(self.slice_count)]
 
         def write(global_pos: tuple[int, int, int], nbt_name: str, passed_attrs={}):
@@ -93,14 +97,14 @@ class Schematic:
                         "slice": slice_index,
                     }
 
-        logging.debug("Mapping blocks")
+        LOG.debug("Mapping blocks")
         for x in range(self.global_width):
             for y in range(self.global_height):
                 for z in range(self.global_length):
                     p = (x, y, z)
                     write(p, self.get_block_global(p))
 
-        logging.info("Mapped %d slices", len(self.slices))
+        LOG.info("Mapped %d slices", len(self.slices))
 
     @property
     def global_width(self):

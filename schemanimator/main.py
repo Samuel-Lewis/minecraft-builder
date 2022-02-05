@@ -1,11 +1,12 @@
 # #!/usr/bin/python3
 
-import animator
-import schematic
-import logging
+from animator import Animator
+from renderer import Renderer
+from schematic import Schematic
 import argparse
+import logging
 import pyglet
-import renderer
+
 
 parser = argparse.ArgumentParser(
     description="Convert a Minecraft schematic to an animation"
@@ -52,20 +53,27 @@ log_level = logging.INFO
 if DEBUG_MODE:
     log_level = logging.DEBUG
 
-logging.basicConfig(level=log_level, format="[%(asctime)s][%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=log_level, format="[%(asctime)s][%(levelname)s][%(name)s] %(message)s"
+)
 logging.debug("Log level: %s", log_level)
 logging.debug("Input file: %s", IN_FULL_NAME)
 logging.debug("Output file: %s", OUT_FULL_NAME)
 
 
 def run():
-    schem = schematic.Schematic(IN_FULL_NAME, args.slices)
-    anim = animator.Animator(schem)
-    renderer.Renderer(
-        anim, OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME, args.pipe
+    schematic = Schematic(IN_FULL_NAME, args.slices)
+    animator = Animator(schematic)
+    Renderer(
+        animator,
+        OUTPUT_WIDTH,
+        OUTPUT_HEIGHT,
+        IN_FULL_NAME,
+        OUT_SHORT_NAME,
+        args.pipe,
+        debug_mode=DEBUG_MODE,
     )
 
-    # ren.queue(sprites)
     pyglet.app.run()
 
 
