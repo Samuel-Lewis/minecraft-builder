@@ -4,10 +4,8 @@ import animator
 import schematic
 import logging
 import argparse
-import loader
 import pyglet
 import renderer
-from isometric import to_screen
 
 parser = argparse.ArgumentParser(
     description="Convert a Minecraft schematic to an animation"
@@ -37,13 +35,16 @@ parser.add_argument(
     default=1,
     type=int,
 )
+parser.add_argument(
+    "-p", "--pipe", help="enable rendering to file", action="store_true"
+)
 
 args = parser.parse_args()
 OUTPUT_WIDTH = args.width
 OUTPUT_HEIGHT = args.height
 IN_FULL_NAME = args.inputFile[0]
 IN_SHORT_NAME = IN_FULL_NAME.split("/")[-1].split(".")[0]
-OUT_FULL_NAME = args.outputFile[0] if args.outputFile else IN_SHORT_NAME + ".mp4"
+OUT_FULL_NAME = args.outputFile[0] if args.outputFile else IN_SHORT_NAME
 OUT_SHORT_NAME = OUT_FULL_NAME.split("/")[-1].split(".")[0]
 DEBUG_MODE = args.debug == True
 
@@ -60,8 +61,10 @@ logging.debug("Output file: %s", OUT_FULL_NAME)
 def run():
     schem = schematic.Schematic(IN_FULL_NAME, args.slices)
     anim = animator.Animator(schem)
-    renderer.Renderer(anim, OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME)
-    
+    renderer.Renderer(
+        anim, OUTPUT_WIDTH, OUTPUT_HEIGHT, IN_FULL_NAME, OUT_FULL_NAME, args.pipe
+    )
+
     # ren.queue(sprites)
     pyglet.app.run()
 
