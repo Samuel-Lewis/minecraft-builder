@@ -1,6 +1,7 @@
 from nbtschematic import SchematicFile
 import isometric
 import logging
+import math
 
 LOG = logging.getLogger(__name__)
 
@@ -78,16 +79,33 @@ class Schematic:
         LOG.debug("Mapping schematic space")
         self.slices = [{} for _ in range(self.slice_count)]
 
+        global map_count
+        map_count = 0
+
         def write(global_pos: tuple[int, int, int], nbt_name: str, passed_attrs={}):
+            global map_count
             slice_index, pos = self.get_slice_pos(global_pos)
 
             id, id_attrs = nbt_split(nbt_name)
             attrs = {**id_attrs, **passed_attrs}
             if self.should_include(id):
                 if pos in self.slices[slice_index]:
+                    LOG.warn(
+                        "Duplicate mapping at %s. %s"
+                        % (
+                            global_pos,
+                            {
+                                "pos": pos,
+                                "slice": slice_index,
+                                "new_nbt": nbt_name,
+                                "existing": self.slices[slice_index][pos].get("id"),
+                            },
+                        )
+                    )
                     old_attrs = self.slices[slice_index][pos].get("attrs")
                     self.slices[slice_index][pos]["attrs"] = {**old_attrs, **attrs}
                 else:
+                    map_count += 1
                     self.slices[slice_index][pos] = {
                         "id": id,
                         "nbt": nbt_name,
@@ -104,7 +122,18 @@ class Schematic:
                     p = (x, y, z)
                     write(p, self.get_block_global(p))
 
-        LOG.info("Mapped %d slices", len(self.slices))
+        ### DISABLED until can figure out an entity layer or reduced conflicts
+        # if "Entities" in self.sf:
+        #     LOG.debug("Mapping entities")
+        #     offset_x, offset_y, offset_z = self.sf.get("Offset")
+        #     for e in self.sf.get("Entities"):
+        #         nbt_name = str(e.get("Id"))
+        #         x = math.floor(e.get("Pos")[0]) - offset_x
+        #         y = math.floor(e.get("Pos")[1]) - offset_y
+        #         z = math.floor(e.get("Pos")[2]) - offset_z
+        #         write((x, y, z), nbt_name)
+
+        LOG.info("Mapped %d positions, across %d slices", map_count, len(self.slices))
 
     @property
     def global_width(self):

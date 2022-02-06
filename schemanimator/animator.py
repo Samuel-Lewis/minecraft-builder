@@ -1,6 +1,7 @@
 from schematic import Schematic
 import easing_functions as ef
 import logging
+import math
 import numpy as np
 
 BUFFER_FRAMES = 30
@@ -27,12 +28,48 @@ class Animator:
             slice = schematic.slices[i]
             keys = list(slice.keys())
             diff = list(set(keys) - set(last_slice))
-            diff = sorted(
-                diff, key=lambda element: (element[0], element[2], element[1])
-            )
+            diff = self.order_diff(diff, slice)
             diffs.append(diff)
             last_slice = keys
         return diffs
+
+    def order_diff(self, diffs, slice):
+        sorted_diffs = list(
+            map(lambda x: slice.get(x), sorted(diffs, key=lambda p: (p[0], p[2], p[1])))
+        )
+
+        if len(sorted_diffs) <= 2:
+            return list(map(lambda p: p.get("pos"), sorted_diffs))
+
+        snake_diffs = [sorted_diffs.pop(0)]
+        while len(sorted_diffs) > 1:
+            latest = snake_diffs[-1]
+            l_x, l_y, l_z = latest.get("pos")
+            latest_type = latest.get("id")
+
+            # get neighbours
+            def dist_func(rhs):
+                p_x, p_y, p_z = rhs.get("pos")
+                dist = math.sqrt((p_x - l_x) ** 2 + (p_y - l_y) ** 2 + (p_z - l_z) ** 2)
+                # 4 connectedness
+                return dist <= 1.0
+
+                # 8 connectedness
+                # return dist <= 1.5
+
+            neighbours = list(filter(dist_func, sorted_diffs))
+            filtered_neighbours = list(
+                filter(lambda p: p.get("id") == latest_type, neighbours)
+            )
+
+            query = [*filtered_neighbours, *neighbours, *sorted_diffs]
+            next_block = query.pop(0)
+            snake_diffs.append(next_block)
+            sorted_diffs.remove(next_block)
+
+        snake_diffs.append(sorted_diffs[-1])
+
+        return list(map(lambda p: p.get("pos"), snake_diffs))
 
     def get_slice_starts(self, diffs):
         slice_starts = [0]
