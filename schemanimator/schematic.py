@@ -89,6 +89,7 @@ class Schematic:
             id, id_attrs = nbt_split(nbt_name)
             attrs = {**id_attrs, **passed_attrs}
             if self.should_include(id):
+                print(id, attrs, pos, slice_index)
                 if pos in self.slices[slice_index]:
                     LOG.warn(
                         "Duplicate mapping at %s. %s"

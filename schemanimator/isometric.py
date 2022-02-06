@@ -63,13 +63,13 @@ def to_isometric(pos: tuple[int, int, int]):
 
 def to_screen(
     pos: tuple[int, int, int],
-    screen_width: int,
-    screen_height: int,
+    width: int,
+    height: int,
     block_size: float,
     pos_meta: dict,
 ):
     i_x, i_y = to_isometric(pos)
-    middle_x, middle_y = (screen_width // 2, screen_height // 2)
+    middle_x, middle_y = (width // 2, height // 2)
     iso_middle_x, iso_middle_y = pos_meta["isometric"]["center"]
 
     half = block_size / 2.0

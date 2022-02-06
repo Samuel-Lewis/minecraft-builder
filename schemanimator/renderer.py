@@ -4,6 +4,7 @@ import isometric
 import loader
 import logging
 import pyglet
+import settings
 
 LOG = logging.getLogger(__name__)
 
@@ -14,10 +15,6 @@ class Renderer(pyglet.window.Window):
         animator: Animator,
         width: int,
         height: int,
-        inputFile: str,
-        outputFile: str,
-        do_pipe: bool,
-        debug_mode: bool,
     ):
         super(Renderer, self).__init__(
             width=width,
@@ -32,12 +29,10 @@ class Renderer(pyglet.window.Window):
         self.frame = 0
         self.paused = False
         self.loader = loader.ImageLoader()
-        self.inputFile = inputFile
-        self.outputFile = outputFile
-        self.do_pipe = do_pipe
-        self.debug_mode = debug_mode
-        if self.do_pipe:
-            Path(f"./frames/{self.outputFile}").mkdir(parents=True, exist_ok=True)
+        if settings.PIPE:
+            Path(f"./frames/{settings.OUTPUT_FILE_NAME}").mkdir(
+                parents=True, exist_ok=True
+            )
 
     def update(self, _):
         if self.paused:
@@ -66,18 +61,22 @@ class Renderer(pyglet.window.Window):
             p = b.get("render_pos")
             opacity = b.get("opacity")
             xi, yi = isometric.to_screen(
-                p, self.width, self.height, block_size, pos_meta
+                pos=p,
+                width=self.width,
+                height=self.height,
+                block_size=block_size,
+                pos_meta=pos_meta,
             )
             scale = block_size / im.width
             sp.update(x=xi, y=yi, scale_x=scale, scale_y=scale)
             sp.opacity = opacity
             sp.draw()
 
-        if self.do_pipe:
+        if settings.PIPE:
             self.pipe()
 
         # Everything after buffer save is not rendered to png outputs
-        if self.debug_mode:
+        if settings.DEBUG_MODE:
             self.debug_draw()
 
     def debug_draw(self):
@@ -85,8 +84,8 @@ class Renderer(pyglet.window.Window):
 
         fps = int(pyglet.clock.get_fps())
         debug_text = f"""
-        input file: {self.inputFile}
-        output file: {self.outputFile}
+        input file: {settings.SCHEM_NAME_SHORT}
+        output file: {settings.OUTPUT_FILE_NAME}
         ---
         frame: {self.frame}
         fps: {fps}
@@ -121,10 +120,8 @@ class Renderer(pyglet.window.Window):
         horz.draw()
 
     def pipe(self):
-        if not self.do_pipe:
-            return
         file_num = str(self.frame).zfill(5)
-        filename = f"{self.outputFile}_{file_num}.png"
+        filename = f"{settings.OUTPUT_FILE_NAME}_{file_num}.png"
         pyglet.image.get_buffer_manager().get_color_buffer().save(
             Path(f"./frames/{filename}")
         )

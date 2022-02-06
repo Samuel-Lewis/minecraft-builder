@@ -3,8 +3,9 @@ import easing_functions as ef
 import logging
 import math
 import numpy as np
+import settings
 
-BUFFER_FRAMES = 30
+BUFFER_FRAMES = 60
 BLOCK_FRAMES = 30
 BLOCK_FRAME_OVERLAP = BLOCK_FRAMES // 2
 EASE_POS = ef.QuadEaseOut(start=-1, end=0, duration=BLOCK_FRAMES)
@@ -28,15 +29,19 @@ class Animator:
             slice = schematic.slices[i]
             keys = list(slice.keys())
             diff = list(set(keys) - set(last_slice))
-            diff = self.order_diff(diff, slice)
+            if settings.SNAKE_ANIMATION:
+                diff = self.snake_order(diff, slice)
+            else:
+                diff = self.flat_order(diff)
             diffs.append(diff)
             last_slice = keys
         return diffs
 
-    def order_diff(self, diffs, slice):
-        sorted_diffs = list(
-            map(lambda x: slice.get(x), sorted(diffs, key=lambda p: (p[0], p[2], p[1])))
-        )
+    def flat_order(self, diffs):
+        return sorted(diffs, key=lambda p: (p[0], p[2], p[1]))
+
+    def snake_order(self, diffs, slice):
+        sorted_diffs = list(map(lambda x: slice.get(x), self.flat_order(diffs)))
 
         if len(sorted_diffs) <= 2:
             return list(map(lambda p: p.get("pos"), sorted_diffs))
