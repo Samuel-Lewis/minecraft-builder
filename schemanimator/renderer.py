@@ -1,10 +1,12 @@
 from animator import Animator
 from loguru import logger
 from pathlib import Path
+import ffmpeg
 import isometric
 import loader
 import pyglet
 import settings
+import subprocess
 
 
 class Renderer(pyglet.window.Window):
@@ -27,10 +29,30 @@ class Renderer(pyglet.window.Window):
         self.frame = 0
         self.paused = False
         self.loader = loader.ImageLoader()
+        self.ffmpeg_process = None
         if settings.PIPE:
             Path(f"./frames/{settings.OUTPUT_FILE_NAME}").mkdir(
                 parents=True, exist_ok=True
             )
+
+            self.ffmpeg_process = self.start_ffmpeg()
+
+    def start_ffmpeg(self):
+        logger.warning("FFMPEG piping is currently not supported")
+        return None
+        # args = (
+        #     ffmpeg.input(
+        #         "pipe:",
+        #         format="rawvideo",
+        #         pix_fmt="rgba",
+        #         s="{}x{}".format(self.width, self.height),
+        #         r=60,
+        #     )
+        #     .output("test.mp4", pix_fmt="yuv420p", loglevel="quiet", r=60)
+        #     .overwrite_output()
+        #     .compile()
+        # )
+        # return subprocess.Popen(args, stdin=subprocess.PIPE)
 
     def update(self, _):
         if self.paused:
@@ -124,6 +146,15 @@ class Renderer(pyglet.window.Window):
             Path(f"./frames/{filename}")
         )
 
+        # buffer = pyglet.image.get_buffer_manager().get_color_buffer()
+        # image_data = buffer.get_image_data()
+
+        # format = "RGBA"
+        # pitch = image_data.width * len(format)
+        # pixels = image_data.get_data(format, pitch)
+
+        # self.ffmpeg_process.stdin.write(pixels)
+
     def on_key_press(self, symbol, modifiers):
         logger.debug(
             "Key pressed: {symbol} {modifiers}", symbol=symbol, modifiers=modifiers
@@ -135,6 +166,10 @@ class Renderer(pyglet.window.Window):
             logger.debug("Paused: {paused}", paused=self.paused)
 
     def stop(self):
+        # if self.ffmpeg_process is not None:
+        #     logger.debug("Closing ffmpeg process")
+        #     self.ffmpeg_process.stdin.close()
+        #     self.ffmpeg_process.wait()
         logger.debug("Stopping...")
         logger.complete()
         pyglet.app.exit()

@@ -5,7 +5,7 @@ import math
 import numpy as np
 import settings
 
-BUFFER_FRAMES = 60
+BUFFER_FRAMES = 2
 BLOCK_FRAMES = 30
 BLOCK_FRAME_OVERLAP = BLOCK_FRAMES // 2
 EASE_POS = ef.QuadEaseOut(start=-1, end=0, duration=BLOCK_FRAMES)
