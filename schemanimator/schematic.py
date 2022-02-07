@@ -1,6 +1,7 @@
+from loguru import logger
 from nbtschematic import SchematicFile
 import isometric
-from loguru import logger
+import nbt
 
 IGNORE_LIST = [
     "minecraft:air",
@@ -11,27 +12,12 @@ IGNORE_LIST = [
 SLICE_BUFFER = 1
 
 
-def nbt_split(nbt_name: str):
-    if "[" not in nbt_name:
-        return nbt_name, {}
-    id, attrs = nbt_name.split("[")
-    attrs = attrs[:-1]
-    attrs = attrs.split(",")
-    attrs = {a.split("=")[0]: a.split("=")[1] for a in attrs}
-    for k in attrs:
-        if attrs[k] == "true":
-            attrs[k] = True
-        elif attrs[k] == "false":
-            attrs[k] = False
-    return id, attrs
-
-
 class Schematic:
     def __init__(self, in_file: str, slice_count: int):
         self.in_file = in_file
         self.slice_count = slice_count
+        self.slices = [{} for _ in range(self.slice_count)]
         self.load_file()
-        self.slices = []
         self.map_space()
         self.pos_meta = isometric.find_extremeties(self.slices)
 
@@ -76,7 +62,6 @@ class Schematic:
 
     def map_space(self):
         logger.debug("Mapping schematic space")
-        self.slices = [{} for _ in range(self.slice_count)]
 
         global map_count
         map_count = 0
@@ -85,32 +70,31 @@ class Schematic:
             global map_count
             slice_index, pos = self.get_slice_pos(global_pos)
 
-            id, id_attrs = nbt_split(nbt_name)
-            attrs = {**id_attrs, **passed_attrs}
-            if self.should_include(id):
-                if pos in self.slices[slice_index]:
-                    logger.warn(
-                        "Duplicate mapping at {global_pos}. {meta}",
-                        global_pos=global_pos,
-                        meta={
-                            "pos": pos,
-                            "slice": slice_index,
-                            "new_nbt": nbt_name,
-                            "existing": self.slices[slice_index][pos].get("id"),
-                        },
-                    )
-                    old_attrs = self.slices[slice_index][pos].get("attrs")
-                    self.slices[slice_index][pos]["attrs"] = {**old_attrs, **attrs}
-                else:
-                    map_count += 1
-                    self.slices[slice_index][pos] = {
-                        "id": id,
-                        "nbt": nbt_name,
-                        "attrs": attrs,
+            nbt_data = nbt.parse(nbt_name)
+            if not self.should_include(nbt_data.get("id")):
+                return
+
+            if pos in self.slices[slice_index]:
+                logger.warning(
+                    "Skipping duplicate mapping at {global_pos}. {meta}",
+                    global_pos=global_pos,
+                    meta={
                         "pos": pos,
-                        "global_pos": global_pos,
                         "slice": slice_index,
-                    }
+                        "new_nbt": nbt_data.get("nbt"),
+                        "existing": self.slices[slice_index][pos]
+                        .get("nbt_data")
+                        .get("nbt"),
+                    },
+                )
+            else:
+                map_count += 1
+                self.slices[slice_index][pos] = {
+                    "nbt_data": nbt_data,
+                    "pos": pos,
+                    "global_pos": global_pos,
+                    "slice": slice_index,
+                }
 
         logger.debug("Mapping blocks")
         for x in range(self.global_width):

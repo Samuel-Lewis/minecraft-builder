@@ -15,40 +15,41 @@ class ImageLoader:
         self.out_file = None
         self.missing_assets = set()
 
-    def log_missing_asset(self, id):
-        if id in self.missing_assets:
+    def log_missing_asset(self, nbt_data):
+        namespace = nbt_data.get("namespace")
+        file_base = nbt_data.get("file_base")
+        nbt = nbt_data.get("nbt")
+        file_name = f"{namespace}/{file_base}.png"
+        if file_name in self.missing_assets:
             return
-        self.missing_assets.add(id)
+        self.missing_assets.add(file_name)
 
-        logger.warning("Failed to load image {id}", id=id)
+        logger.warning("Failed to load {file_name}", file_name=file_name)
         if self.out_file == None:
             self.out_file = open("missing.txt", "w")
-        self.out_file.write(f"{id}\n")
+        self.out_file.write(f"/isorender block {nbt}\n  {file_name}\n")
         self.out_file.flush()
         os.fsync(self.out_file.fileno())
 
-    def get_namespace(self, id):
-        namespace, name = id.split(":")
-        return namespace, name
+    def fetch_resource(self, nbt_data):
+        namespace = nbt_data.get("namespace")
+        file_base = nbt_data.get("file_base")
+        file_name = f"{namespace}/{file_base}.png"
 
-    def fetch_resource(self, block):
-        nbt = block.get("nbt")
-        id = block.get("id")
         try:
-            logger.trace("Loading image {id}", id=id)
-            namespace, name = self.get_namespace(id)
-            image = pyglet.resource.image(f"{namespace}/{name}.png")
-            self.images[id] = image
+            logger.trace("Loading image {file_name}", file_name=file_name)
+            image = pyglet.resource.image(file_name)
             return image
         except:
-            self.log_missing_asset(nbt)
+            self.log_missing_asset(nbt_data)
             return self.missing
 
     def get_image(self, block):
-        id = block.get("id")
-        if id in self.images:
-            return self.images[id]
+        nbt_data = block.get("nbt_data")
+        file_base = nbt_data.get("file_base")
+        if file_base in self.images:
+            return self.images[file_base]
         else:
-            image = self.fetch_resource(block)
-            self.images[id] = image
+            image = self.fetch_resource(nbt_data)
+            self.images[file_base] = image
             return image
