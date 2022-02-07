@@ -1,6 +1,6 @@
 from schematic import Schematic
 import easing_functions as ef
-import logging
+from loguru import logger
 import math
 import numpy as np
 import settings
@@ -11,8 +11,6 @@ BLOCK_FRAME_OVERLAP = BLOCK_FRAMES // 2
 EASE_POS = ef.QuadEaseOut(start=-1, end=0, duration=BLOCK_FRAMES)
 EASE_OPACITY = ef.QuadEaseOut(start=0, end=255, duration=BLOCK_FRAMES)
 
-LOG = logging.getLogger(__name__)
-
 
 class Animator:
     def __init__(self, schematic: Schematic):
@@ -20,7 +18,7 @@ class Animator:
         self.diffs = self.get_diffs(schematic)
         self.slice_starts = self.get_slice_starts(self.diffs)
         self.end_frame = self.slice_starts[-1]
-        LOG.info("Animation length (frames): %d" % self.end_frame)
+        logger.info("Animation length (frames): {frames}", frames=self.end_frame)
 
     def get_diffs(self, schematic):
         last_slice = []
@@ -90,14 +88,16 @@ class Animator:
         frame = np.array([frame])
         inds = np.digitize(frame, self.slice_starts)
         if len(inds) == 0:
-            LOG.error(
-                "Could not find frame %d in slice starts, %s" % frame, self.slice_starts
+            logger.error(
+                "Could not find frame {frame} in slice_starts {slice_starts}",
+                frame=frame,
+                slice_starts=self.slice_starts,
             )
         return inds[0] - 1
 
     def update(self, frame: int):
         if frame >= self.end_frame:
-            LOG.debug("Animation finished")
+            logger.debug("Animation finished")
             return ([], False)
 
         blocks = []

@@ -1,12 +1,10 @@
 from animator import Animator
+from loguru import logger
 from pathlib import Path
 import isometric
 import loader
-import logging
 import pyglet
 import settings
-
-LOG = logging.getLogger(__name__)
 
 
 class Renderer(pyglet.window.Window):
@@ -126,14 +124,17 @@ class Renderer(pyglet.window.Window):
             Path(f"./frames/{filename}")
         )
 
-    def on_key_press(self, symbol, _):
-        LOG.debug("Key pressed: %s", symbol)
+    def on_key_press(self, symbol, modifiers):
+        logger.debug(
+            "Key pressed: {symbol} {modifiers}", symbol=symbol, modifiers=modifiers
+        )
         if symbol == pyglet.window.key.ESCAPE:
             self.stop()
         if symbol == pyglet.window.key.SPACE:
             self.paused = not self.paused
-            LOG.debug("Paused: %s", self.paused)
+            logger.debug("Paused: {paused}", paused=self.paused)
 
     def stop(self):
-        LOG.debug("Stopping...")
+        logger.debug("Stopping...")
+        logger.complete()
         pyglet.app.exit()

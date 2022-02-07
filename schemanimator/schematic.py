@@ -1,9 +1,6 @@
 from nbtschematic import SchematicFile
 import isometric
-import logging
-import math
-
-LOG = logging.getLogger(__name__)
+from loguru import logger
 
 IGNORE_LIST = [
     "minecraft:air",
@@ -40,20 +37,22 @@ class Schematic:
 
     def load_file(self):
         self.sf = SchematicFile.load(self.in_file).get("Schematic")
-        LOG.info("Loaded schematic file %s", self.in_file)
-        LOG.info(
-            "Dimensions %dw x %dh x %dl",
-            self.sf.get("Width"),
-            self.sf.get("Height"),
-            self.sf.get("Length"),
+        logger.info("Loaded schematic file %s" % self.in_file)
+        logger.info(
+            "Dimensions {width}w x {height}h x {length}l",
+            width=int(self.sf.get("Width")),
+            height=int(self.sf.get("Height")),
+            length=int(self.sf.get("Length")),
         )
-        LOG.debug("Properties: %s", self.sf.keys())
+        logger.trace("Properties: {keys}", keys=self.sf.keys())
         self.palette = {value: key for (key, value) in self.sf.get("Palette").items()}
 
     def get_block_global(self, pos: tuple[int, int, int]):
         c = self.global_cord_to_index(pos)
         if c > self.sf.get("Length") * self.sf.get("Width") * self.sf.get("Height"):
-            LOG.error("Position [%s] out of bounds (index %d)", pos, c)
+            logger.error(
+                "Position {pos} out of bounds (index {index})", pos=pos, index=c
+            )
             return None
         return self.palette.get(self.sf.get("BlockData")[c])
 
@@ -76,7 +75,7 @@ class Schematic:
         return id not in IGNORE_LIST
 
     def map_space(self):
-        LOG.debug("Mapping schematic space")
+        logger.debug("Mapping schematic space")
         self.slices = [{} for _ in range(self.slice_count)]
 
         global map_count
@@ -89,19 +88,16 @@ class Schematic:
             id, id_attrs = nbt_split(nbt_name)
             attrs = {**id_attrs, **passed_attrs}
             if self.should_include(id):
-                print(id, attrs, pos, slice_index)
                 if pos in self.slices[slice_index]:
-                    LOG.warn(
-                        "Duplicate mapping at %s. %s"
-                        % (
-                            global_pos,
-                            {
-                                "pos": pos,
-                                "slice": slice_index,
-                                "new_nbt": nbt_name,
-                                "existing": self.slices[slice_index][pos].get("id"),
-                            },
-                        )
+                    logger.warn(
+                        "Duplicate mapping at {global_pos}. {meta}",
+                        global_pos=global_pos,
+                        meta={
+                            "pos": pos,
+                            "slice": slice_index,
+                            "new_nbt": nbt_name,
+                            "existing": self.slices[slice_index][pos].get("id"),
+                        },
                     )
                     old_attrs = self.slices[slice_index][pos].get("attrs")
                     self.slices[slice_index][pos]["attrs"] = {**old_attrs, **attrs}
@@ -116,7 +112,7 @@ class Schematic:
                         "slice": slice_index,
                     }
 
-        LOG.debug("Mapping blocks")
+        logger.debug("Mapping blocks")
         for x in range(self.global_width):
             for y in range(self.global_height):
                 for z in range(self.global_length):
@@ -125,7 +121,7 @@ class Schematic:
 
         ### DISABLED until can figure out an entity layer or reduced conflicts
         # if "Entities" in self.sf:
-        #     LOG.debug("Mapping entities")
+        #     logger.debug("Mapping entities")
         #     offset_x, offset_y, offset_z = self.sf.get("Offset")
         #     for e in self.sf.get("Entities"):
         #         nbt_name = str(e.get("Id"))
@@ -134,7 +130,11 @@ class Schematic:
         #         z = math.floor(e.get("Pos")[2]) - offset_z
         #         write((x, y, z), nbt_name)
 
-        LOG.info("Mapped %d positions, across %d slices", map_count, len(self.slices))
+        logger.info(
+            "Mapped {map_count} positions, across {slices} slices",
+            map_count=map_count,
+            slices=len(self.slices),
+        )
 
     @property
     def global_width(self):

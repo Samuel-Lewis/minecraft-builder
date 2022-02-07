@@ -1,26 +1,20 @@
 # #!/usr/bin/python3
 
 from animator import Animator
+from loguru import logger
 from renderer import Renderer
 from schematic import Schematic
-import logging
 import pyglet
 import settings
 
 
+@logger.catch
 def run():
     settings.init()
 
-    log_level = logging.INFO
-    if settings.DEBUG_MODE:
-        log_level = logging.DEBUG
-
-    logging.basicConfig(
-        level=log_level, format="[%(asctime)s][%(levelname)s][%(name)s] %(message)s"
-    )
-    logging.debug("Log level: %s", log_level)
-    logging.debug("Input file: %s", settings.SCHEM_NAME)
-    logging.debug("Output file: %s", settings.OUTPUT_FILE_NAME)
+    logger.debug("Debug mode: {mode}", mode=settings.DEBUG_MODE)
+    logger.debug("Input file: {file}", file=settings.SCHEM_NAME)
+    logger.debug("Output file: {file}", file=settings.OUTPUT_FILE_NAME)
 
     schematic = Schematic(settings.SCHEM_NAME, settings.SLICES)
     animator = Animator(schematic)
