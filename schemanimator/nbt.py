@@ -1,68 +1,70 @@
 # Source: https://minecraft.fandom.com/wiki/Block_states
-DEFINING_BLOCK_STATES = [
-    "age",
-    "attached",
-    "attachment",
-    "axis",
-    "berries",
-    "bites",
-    "bottom",
-    "candles",
-    "charges",
-    "conditional",
-    "delay",
-    "disarmed",
-    "down",
-    "drag",
-    "east",
-    "eggs",
-    "extended",
-    "eye",
-    "face",
-    "facing",
-    "half",
-    "hanging",
-    "has_book",
-    "has_bottle_0",
-    "has_bottle_1",
-    "has_bottle_2",
-    "hinge",
-    "honey_level",
-    "in_wall",
-    "inverted",
-    "layers",
-    "leaves",
-    "level",
-    "lit",
-    "locked",
-    "mode",
-    "moisture",
-    "north",
-    "open",
-    "orientation",
-    "part",
-    "pickles",
-    "powered",
-    "rotation",
-    "sculk_sensor_phase",
-    "shape",
-    "shape",
-    "short",
-    "signal_fire",
-    "south",
-    "stage",
-    "thickness",
-    "tilt",
-    "type",
-    "up",
-    "vertical_direction",
-    "waterlogged",
-    "west",
-]
+DEFINING_BLOCK_STATES = {
+    "age": "0",
+    "attached": "false",
+    "attachment": "floor",
+    "axis": "y",
+    "berries": "false",
+    "bites": "0",
+    "bottom": "false",
+    "candles": "1",
+    "charges": "0",
+    "conditional": "false",
+    "delay": "1",
+    "disarmed": "false",
+    "down": "false",
+    "drag": "true",
+    "east": "false",
+    "eggs": "1",
+    "extended": "false",
+    "eye": "false",
+    "face": "wall",
+    "facing": None,
+    "half": None,
+    "hanging": "false",
+    "has_book": "false",
+    "has_bottle_0": "false",
+    "has_bottle_1": "false",
+    "has_bottle_2": "false",
+    "hinge": "left",
+    "honey_level": "0",
+    "in_wall": "false",
+    "inverted": "false",
+    "layers": "1",
+    "leaves": "0",
+    "level": "0",
+    "lit": "false",
+    "locked": "false",
+    "mode": "compare",
+    "moisture": "0",
+    "north": "false",
+    "open": "false",
+    "orientation": "north_up",
+    "part": "foot",
+    "pickles": "1",
+    "powered": "false",
+    "rotation": "0",
+    "sculk_sensor_phase": "cooldown",
+    "shape": "north_south",
+    "short": "false",
+    "signal_fire": "false",
+    "south": "false",
+    "stage": "0",
+    "thickness": "tip",
+    "tilt": "none",
+    "type": "normal",
+    "up": "false",
+    "vertical_direction": "up",
+    "waterlogged": "false",
+    "west": "false",
+}
 
 
 def parse(nbt_name: str):
-    # minecraft:hopper[facing=north,fake=true]
+    # parses nbt strings, extracting namesspace and attributes
+    # only keeps attributes that are not default value and that actually cause a difference in block appearance
+
+    # minecraft:hopper[facing=north,fake=true,waterlogged=false]
     #   namespace: "minecraft"
     #   name: "hopper"
     #   attrs: { "facing": "north" }
@@ -89,7 +91,9 @@ def parse(nbt_name: str):
     for attr in attrs:
         key, value = attr.split("=")
         if key in DEFINING_BLOCK_STATES:
-            filtered_attrs[key] = value
+            default = DEFINING_BLOCK_STATES.get(key)
+            if default is None or value != default:
+                filtered_attrs[key] = value
 
     nbt = f"{namespace}:{name}"
     file_base = name
