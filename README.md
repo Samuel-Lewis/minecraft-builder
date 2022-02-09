@@ -1,12 +1,31 @@
-# Schematic Prep
+# Setup
 
-- Schematics should always be NORTH/SOUTH, with slices of the schematic extending EAST
-- WEST most slice is slice 0
-- Every slice must be the same width
-- ![Schematic rendering cords](./docs/render_cords.png)
-- There should be a one block gap between each slice
-- ![Schematic rendering cords](./docs/schematic_layout.png)
+## Schematics
+
+- Schematics should always be NORTH/SOUTH, with the slices extending EAST
+- Every slice of the schematic needs to be the same width
 - Barrier blocks and all air block types are are ignored
+  ![Schematic rendering cords](./docs/cords.png)
+- The schematic border
+  - All schematics must have the 1 wide border (on all axis), even if the schematic is only 1 slice
+  - Include the border in your schematic
+  - The gap between slices only needs to be 1 block wide
+    ![Schematic rendering cords](./docs/slice_demo.png)
+
+## Block renders
+
+For block spawning and asset naming, just run the schematic through once and it will generate a `missing.txt` with the `/isorender` command and path/name of the asset. At the moment, this is quite a manual process (sorry), but we're looking into better solutions.
+
+Rendering settings:
+
+- `scale`: 304
+- `rotation`: 315
+- `angle`: 36 (isometric)
+- `render height`: 0
+- `lighting profile`: flat
+- `animations`: false
+- `render resolution`: 512
+- `external renderer`: true
 
 # Resources
 

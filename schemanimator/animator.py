@@ -5,7 +5,7 @@ import math
 import numpy as np
 import settings
 
-BUFFER_FRAMES = 2
+BUFFER_FRAMES = 60
 BLOCK_FRAMES = 30
 BLOCK_FRAME_OVERLAP = BLOCK_FRAMES // 2
 EASE_POS = ef.QuadEaseOut(start=-1, end=0, duration=BLOCK_FRAMES)
@@ -36,7 +36,7 @@ class Animator:
         return diffs
 
     def flat_order(self, diffs):
-        return sorted(diffs, key=lambda p: (p[0], p[2], p[1]))
+        return sorted(diffs, key=lambda p: (p[1], p[0], p[2]))
 
     def snake_order(self, diffs, slice):
         sorted_diffs = list(map(lambda x: slice.get(x), self.flat_order(diffs)))
@@ -105,9 +105,9 @@ class Animator:
         local_frame = frame - self.slice_starts[slice]
         new_blocks = self.diffs[slice]
 
-        for y in range(self.schematic.height):
-            for z in range(self.schematic.length):
-                for x in range(self.schematic.width):
+        for y in range(self.schematic.slice_height):
+            for z in range(self.schematic.slice_length):
+                for x in range(self.schematic.slice_width):
                     p = (x, y, z)
                     b = self.schematic.at(p, slice)
                     if b is None:
