@@ -1,3 +1,9 @@
+# Demo
+
+![Demo](./docs/demo.gif)
+
+Note: There are some artifacts in the demo (eg, bad transparency) that are not present in the actual production output. They're a sympton of the gif creation and optimisation process.
+
 # Setup
 
 ## Schematics
