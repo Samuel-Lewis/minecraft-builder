@@ -13,10 +13,9 @@ def run():
     settings.init()
 
     logger.debug("Debug mode: {mode}", mode=settings.DEBUG_MODE)
-    logger.debug("Input file: {file}", file=settings.SCHEM_NAME)
-    logger.debug("Output file: {file}", file=settings.OUTPUT_FILE_NAME)
+    logger.debug("Schematic path: {file}", file=settings.SCHEM_PATH)
 
-    schematic = Schematic(settings.SCHEM_NAME, settings.SLICES)
+    schematic = Schematic(settings.SCHEM_PATH, settings.SLICES)
     animator = Animator(schematic)
     Renderer(
         animator=animator,

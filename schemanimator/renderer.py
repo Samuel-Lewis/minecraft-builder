@@ -30,29 +30,29 @@ class Renderer(pyglet.window.Window):
         self.paused = False
         self.loader = loader.ImageLoader()
         self.ffmpeg_process = None
+
         if settings.PIPE:
-            Path(f"./frames/{settings.OUTPUT_FILE_NAME}").mkdir(
-                parents=True, exist_ok=True
-            )
+            Path(f"./frames/{settings.SCHEM_NAME}").mkdir(parents=True, exist_ok=True)
 
             self.ffmpeg_process = self.start_ffmpeg()
 
     def start_ffmpeg(self):
-        logger.warning("FFMPEG piping is currently not supported")
-        return None
-        # args = (
-        #     ffmpeg.input(
-        #         "pipe:",
-        #         format="rawvideo",
-        #         pix_fmt="rgba",
-        #         s="{}x{}".format(self.width, self.height),
-        #         r=60,
-        #     )
-        #     .output("test.mp4", pix_fmt="yuv420p", loglevel="quiet", r=60)
-        #     .overwrite_output()
-        #     .compile()
-        # )
-        # return subprocess.Popen(args, stdin=subprocess.PIPE)
+        args = (
+            ffmpeg.input(
+                "pipe:",
+                format="rawvideo",
+                pix_fmt="rgb24",
+                s="{}x{}".format(self.width, self.height),
+                r=60,
+            )
+            .vflip()
+            .output(
+                f"{settings.SCHEM_NAME}.mp4", pix_fmt="yuv420p", loglevel="quiet", r=60
+            )
+            .overwrite_output()
+            .compile()
+        )
+        return subprocess.Popen(args, stdin=subprocess.PIPE)
 
     def update(self, _):
         if self.paused:
@@ -104,8 +104,8 @@ class Renderer(pyglet.window.Window):
 
         fps = int(pyglet.clock.get_fps())
         debug_text = f"""
-        input file: {settings.SCHEM_NAME_SHORT}
-        output file: {settings.OUTPUT_FILE_NAME}
+        schematic: {settings.SCHEM_NAME}
+        pipe: {settings.PIPE}
         ---
         frame: {self.frame}
         fps: {fps}
@@ -140,20 +140,26 @@ class Renderer(pyglet.window.Window):
         horz.draw()
 
     def pipe(self):
-        file_num = str(self.frame).zfill(5)
-        filename = f"{settings.OUTPUT_FILE_NAME}_{file_num}.png"
-        pyglet.image.get_buffer_manager().get_color_buffer().save(
-            Path(f"./frames/{filename}")
+        buffer = pyglet.image.get_buffer_manager().get_color_buffer()
+
+        # Frame exports
+        filenum = str(self.frame).zfill(5)
+        filename = f"frame{filenum}.png"
+        buffer.save(Path(f"./frames/{settings.SCHEM_NAME}/{filename}"))
+
+        # https://stackoverflow.com/questions/367684/get-data-from-opengl-glreadpixelsusing-pyglet ??
+        gl_buffer = (pyglet.gl.GLubyte * (3 * self.width * self.height))(0)
+        pyglet.gl.glReadPixels(
+            0,
+            0,
+            self.width,
+            self.height,
+            pyglet.gl.GL_RGB,
+            pyglet.gl.GL_UNSIGNED_BYTE,
+            gl_buffer,
         )
 
-        # buffer = pyglet.image.get_buffer_manager().get_color_buffer()
-        # image_data = buffer.get_image_data()
-
-        # format = "RGBA"
-        # pitch = image_data.width * len(format)
-        # pixels = image_data.get_data(format, pitch)
-
-        # self.ffmpeg_process.stdin.write(pixels)
+        self.ffmpeg_process.stdin.write(gl_buffer)
 
     def on_key_press(self, symbol, modifiers):
         logger.debug(
@@ -166,10 +172,10 @@ class Renderer(pyglet.window.Window):
             logger.debug("Paused: {paused}", paused=self.paused)
 
     def stop(self):
-        # if self.ffmpeg_process is not None:
-        #     logger.debug("Closing ffmpeg process")
-        #     self.ffmpeg_process.stdin.close()
-        #     self.ffmpeg_process.wait()
+        if self.ffmpeg_process is not None:
+            logger.debug("Closing ffmpeg process")
+            self.ffmpeg_process.stdin.close()
+            self.ffmpeg_process.wait()
         logger.debug("Stopping...")
         logger.complete()
         pyglet.app.exit()

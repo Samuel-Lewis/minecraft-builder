@@ -1,11 +1,11 @@
 import argparse
 from asyncio.constants import SSL_HANDSHAKE_TIMEOUT
+from pathlib import Path
 
 parser = argparse.ArgumentParser(
     description="Convert a Minecraft schematic to an animation"
 )
 parser.add_argument("inputFile", type=str, nargs=1, help="The input schematic file")
-parser.add_argument("outputFile", type=str, nargs="?", help="The output animation file")
 parser.add_argument("-d", "--debug", help="enable debug mode", action="store_true")
 parser.add_argument(
     "--width",
@@ -42,9 +42,8 @@ parser.add_argument(
 def init():
     global SCREEN_WIDTH
     global SCREEN_HEIGHT
+    global SCHEM_PATH
     global SCHEM_NAME
-    global SCHEM_NAME_SHORT
-    global OUTPUT_FILE_NAME
     global DEBUG_MODE
     global SLICES
     global PIPE
@@ -54,9 +53,8 @@ def init():
 
     SCREEN_WIDTH = args.width
     SCREEN_HEIGHT = args.height
-    SCHEM_NAME = args.inputFile[0]
-    SCHEM_NAME_SHORT = SCHEM_NAME.split("/")[-1].split(".")[0]
-    OUTPUT_FILE_NAME = args.outputFile[0] if args.outputFile else SCHEM_NAME_SHORT
+    SCHEM_PATH = args.inputFile[0]
+    SCHEM_NAME = Path(SCHEM_PATH).stem
     DEBUG_MODE = args.debug == True
     SLICES = args.slices
     PIPE = args.pipe == True
